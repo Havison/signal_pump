@@ -21,7 +21,7 @@ class MongoDatabase:
     try:
         async def market_add(self, market: list):
             for market in market:
-                dt_old = datetime.datetime.now() - datetime.timedelta(minutes=30)
+                dt_old = datetime.datetime.now() - datetime.timedelta(minutes=35)
                 symbol, price = market.values()
                 result = await self.collection.find_one({'currency': symbol}, {'_id': 0})
                 if result:
