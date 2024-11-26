@@ -57,29 +57,29 @@ class MongoDatabase:
                         if setting['pump'][0] > 0:
                             if setting['pump'][0] <= result:
                                 finish_result.setdefault('pump', []).append((item['currency'], result))
-                                break
+
                         else:
                             if setting['pump'][0] >= result:
                                 finish_result.setdefault('pump', []).append((item['currency'], result))
-                                break
+
                     if t_dump:
                         if setting['dump'][0] > 0:
                             if setting['dump'][0] <= result:
                                 finish_result.setdefault('dump', []).append((item['currency'], result))
-                                break
+
                         else:
                             if setting['dump'][0] >= result:
                                 finish_result.setdefault('dump', []).append((item['currency'], result))
-                                break
+
                     if t_pump_min:
                         if setting['pump_min'][0] > 0:
                             if setting['pump_min'][0] <= result:
                                 finish_result.setdefault('pump_min', []).append((item['currency'], result))
-                                break
+
                         else:
                             if setting['pump_min'][0] >= result:
                                 finish_result.setdefault('pump_min', []).append((item['currency'], result))
-                                break
+
             return finish_result
     except Exception as e:
         logger3.error('users_market', e)
