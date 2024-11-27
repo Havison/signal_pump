@@ -50,7 +50,7 @@ class MongoDatabase:
                     t_pump = i['dt'] > dt_pump
                     t_dump = i['dt'] > dt_dump
                     t_pump_min = i['dt'] > dt_pump_min
-                    if not all([t_pump, t_dump, t_pump_min]):
+                    if not any([t_pump, t_dump, t_pump_min]):
                         break
                     result = eval(f'({a} - {i['price']}) / {a} * {100}')
                     if t_pump:
