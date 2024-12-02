@@ -44,6 +44,8 @@ class MongoDatabase:
             dt_pump_min = datetime.datetime.now() - datetime.timedelta(minutes=setting['pump_min'][1])
             finish_result = {}
             async for item in result:
+                if not item['currency'] in last_price:
+                    continue
                 a = last_price[item['currency']][0]
                 price = item['data'][::-1]
                 for i in price:
