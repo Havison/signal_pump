@@ -1,9 +1,11 @@
 import asyncio
 import logging
-import requests
+import aiohttp
 
 from datetime import datetime
-from pybit.unified_trading import HTTP
+
+from aiohttp import ClientError
+
 from config_data.config import Config, load_config
 from database.database import MongoDatabase, MySQLDatabase
 from handlers.user import message_bybit_binance, message_bybit, message_binance
@@ -16,69 +18,103 @@ formatter2 = logging.Formatter("%(filename)s:%(lineno)d #%(levelname)-8s "
 config: Config = load_config('.env')
 mongo_db = MongoDatabase()
 
-try:
-    session = HTTP(
-        testnet=False,
-        api_key=config.by_bit.api_key,
-        api_secret=config.by_bit.api_secret,
-    )
-except Exception as e:
-    logger2.error(e)
+
+async def fetch_binance_prices(session):
+    url = 'https://fapi.binance.com/fapi/v2/ticker/price'
+    try:
+        async with session.get(url, ssl=False, timeout=10) as response:
+            return await response.json()
+    except asyncio.TimeoutError:
+        logger2.error("Timeout while connecting to Binance API")
+    except aiohttp.ClientError as e:
+        logger2.error(f"Error fetching Binance data: {e}")
+    return []
 
 
-async def market_price():
+async def fetch_bybit_tickers(session):
+    try:
+        # Используем asyncio.to_thread для выполнения синхронного метода в отдельном потоке
+        data_bybit = await asyncio.to_thread(session.get_tickers, category="linear")
+        return data_bybit.get("result", {}).get("list", [])
+    except Exception as e:
+        logger2.error(f"Error fetching Bybit data: {e}")
+        return []
+
+
+async def market_price(session, http_session, retries=5, delay=5):
     try:
         await asyncio.sleep(2)
-        url = 'https://fapi.binance.com/fapi/v2/ticker/price'
-        response = requests.get(url)
-        data_binance = response.json()
-        binance_symbol = []
-        data_bybit = session.get_tickers(category="linear")
+
+        # Параллельные запросы к Binance и Bybit
+        data_binance, data_bybit = await asyncio.gather(
+            fetch_binance_prices(http_session),
+            fetch_bybit_tickers(session)
+        )
+
         last_price = {}
         market_data = []
         bybit_symbol = []
-        for dicts in data_bybit['result']['list']:
+        binance_symbol = []
+
+        for dicts in data_bybit:
             if 'USDT' in dicts['symbol']:
                 market_data.append({'currency': dicts['symbol'],
-                             'data': {'price': eval(dicts['lastPrice']),
-                                      'oi': eval(dicts['openInterest']),
-                                      'dt': datetime.now()}})
-                last_price[dicts['symbol']] = (dicts['lastPrice'], dicts['openInterest'], datetime.now())
+                                    'data': {'price': float(dicts['lastPrice']),
+                                             'oi': float(dicts['openInterest']),
+                                             'dt': datetime.now()}})
+                last_price[dicts['symbol']] = (float(dicts['lastPrice']), float(dicts['openInterest']), datetime.now())
                 bybit_symbol.append((dicts['symbol'], 1))
+
         for data in data_binance:
             if 'USDT' in data['symbol']:
                 if data['symbol'] not in bybit_symbol:
                     market_data.append({'currency': data['symbol'],
-                                 'data': {'price': eval(data['price']),
-                                          'oi': -1,
-                                          'dt': datetime.now()}})
-                    last_price[data['symbol']] = (data['price'], None, datetime.now())
+                                        'data': {'price': float(data['price']),
+                                                 'oi': -1,
+                                                 'dt': datetime.now()}})
+                    last_price[data['symbol']] = (float(data['price']), None, datetime.now())
                 binance_symbol.append((data['symbol'], 0))
+
         return market_data, bybit_symbol, binance_symbol, last_price
+
+    except ClientError as e:
+        logger2.error(f"Network error with Binance API: {e}")
+    except KeyError as e:
+        logger2.error(f"Key error: {e} (check API response structure)")
     except Exception as e:
-        logger2.error(e)
-        await asyncio.sleep(5)
-        await market_price()
+        logger2.error(f"Unexpected error: {e}")
+
+    if retries > 0:
+        logger2.info(f"Retrying... {retries} attempts left")
+        await asyncio.sleep(delay)
+
+        return await market_price(session, http_session, retries=retries - 1, delay=delay)
+
+    logger2.error("Max retries exceeded in market_price")
+    return None, None, None, None
 
 
-async def market_add_database():
-    data = await market_price()
+async def market_add_database(session, http_session):
+    data = await market_price(session, http_session)
+    if data[0] is None:
+        logger2.warning("Failed to fetch market data. Skipping this cycle.")
+        return
     await mongo_db.market_add(data[0])
     await asyncio.sleep(3)
 
 
-async def users_list():
-    # try:
-    bybit, binance = await MySQLDatabase.symbol_binance_bybit()
-    user = await MySQLDatabase.list_premium()
-    user_iter = [i[0] for i in user]
-    while user_iter:
-        tg_id_user = [user_signal_bybit(user, bybit, binance) for user in user_iter[:10]]
-        await asyncio.gather(*tg_id_user)
-        user_iter = user_iter[10:]
-    # except Exception as e:
-    #     logger2.error(e)
-    #     await asyncio.sleep(2)
+async def users_list(session, http_session):
+    try:
+        bybit, binance = await MySQLDatabase.symbol_binance_bybit()
+        user = await MySQLDatabase.list_premium()
+        user_iter = [i[0] for i in user]
+        while user_iter:
+            tg_id_user = [user_signal_bybit(user, bybit, binance, session, http_session) for user in user_iter[:10]]
+            await asyncio.gather(*tg_id_user)
+            user_iter = user_iter[10:]
+    except Exception as e:
+        logger2.error(e)
+        await asyncio.sleep(2)
 
 
 async def default_signal_user(user, symbol, a, sml, quantity_interval, interval, pd, bybit, binance,
@@ -106,9 +142,12 @@ async def default_signal_user(user, symbol, a, sml, quantity_interval, interval,
             await message_binance(user.tg_id, a, symbol, interval, q, sml, hours)
 
 
-async def user_signal_bybit(idt, bybit, binance):
+async def user_signal_bybit(idt, bybit, binance, session, http_session):
     user = MySQLDatabase(idt)
-    last_price = await market_price()
+    last_price = await market_price(session, http_session)
+    if last_price[0] is None:
+        logger2.warning("Failed to fetch market data. Skipping this cycle.")
+        return
     last_price = last_price[3]
     setting = await user.db_setting_selection()
     quantity_interval = setting['interval_signal_pd']
@@ -144,8 +183,8 @@ async def user_signal_bybit(idt, bybit, binance):
                                       2, bybit, binance, quantity_signal_pm)
 
 
-async def add_symbol():
-    symbol = await market_price()
+async def add_symbol(session, http_session):
+    symbol = await market_price(session, http_session)
     add = symbol[1] + symbol[2]
     await MySQLDatabase.clear_premium()
     await MySQLDatabase.db_symbol_create(add)
