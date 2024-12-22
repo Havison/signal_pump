@@ -15,8 +15,8 @@ async def continuous_task_bybit(session, http_session):
     while True:
         try:
             await market_add_database(session, http_session)
-        except Exception as e:
-            logger.error(f"Error in continuous_task_bybit: {e}", exc_info=True)
+        except Exception as E:
+            logger.error(f"Error in continuous_task_bybit: {E}", exc_info=True)
         await asyncio.sleep(10)  # Задержка перед следующей итерацией
 
 
@@ -27,8 +27,8 @@ async def continuous_task_user(session, http_session):
     while True:
         try:
             await users_list(session, http_session)
-        except Exception as e:
-            logger.error(f"Error in continuous_task_user: {e}", exc_info=True)
+        except Exception as E:
+            logger.error(f"Error in continuous_task_user: {E}", exc_info=True)
         await asyncio.sleep(10)  # Задержка перед следующей итерацией
 
 
@@ -39,8 +39,8 @@ async def continuous_task_symbol(session, http_session):
     while True:
         try:
             await add_symbol(session, http_session)
-        except Exception as e:
-            logger.error(f"Error in continuous_task_symbol: {e}", exc_info=True)
+        except Exception as E:
+            logger.error(f"Error in continuous_task_symbol: {E}", exc_info=True)
         await asyncio.sleep(1200)  # 20 минут задержки
 
 

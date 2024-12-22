@@ -1,5 +1,7 @@
 import asyncio
 import logging
+
+
 import aiohttp
 
 from datetime import datetime
@@ -9,6 +11,7 @@ from aiohttp import ClientError
 from config_data.config import Config, load_config
 from database.database import MongoDatabase, MySQLDatabase
 from handlers.user import message_bybit_binance, message_bybit, message_binance
+from trade.trade import trade
 
 logger2 = logging.getLogger(__name__)
 handler2 = logging.FileHandler(f"{__name__}.log")
@@ -135,9 +138,15 @@ async def default_signal_user(user, symbol, a, sml, quantity_interval, interval,
         if quantity_signal > 10:
             return
         if symbol in bybit and symbol in binance:
-            await message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours)
+            if pd == 1:
+                await asyncio.gather(message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours), trade(symbol))
+            else:
+                await message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours)
         elif symbol in bybit:
-            await message_bybit(user.tg_id, a, symbol, interval, q, sml, hours)
+            if pd == 1:
+                await asyncio.gather(message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours), trade(symbol))
+            else:
+                await message_bybit(user.tg_id, a, symbol, interval, q, sml, hours)
         else:
             await message_binance(user.tg_id, a, symbol, interval, q, sml, hours)
 
