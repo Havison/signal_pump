@@ -17,7 +17,7 @@ client = HTTP(testnet=False, api_key=config.by_bit.api_key, api_secret=config.by
 
 trade_amount = 10  # Размер сделки в USDT
 stop_loss_pct = 2  # Стоп-лосс в процентах
-take_profit_pct = 4  # Уровень активации трейлинг-стопа
+take_profit_pct = 3  # Уровень активации трейлинг-стопа
 trailing_stop_pct = 1.5  # Расстояние трейлинг-стопа
 
 
