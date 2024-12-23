@@ -59,7 +59,7 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
         symbol_price = await get_symbol_price(symbol)
         if not symbol_price:
             return False
-        qty = str(ceil(amount / symbol_price))
+        qty = str(round(amount / symbol_price, 2))
         # Открываем короткую позицию
         order = client.place_order(
             category="linear",
