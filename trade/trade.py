@@ -44,7 +44,7 @@ async def get_symbol_price(symbol):
         ticker = client.get_tickers(category="linear", symbol=symbol)
         x = ticker['result']['list'][0]['lastPrice']
         v = ticker['result']['list'][0]['volume24h']
-        if float(v) * float(x) < 15000000:
+        if float(v) * float(x) < 5000000:
             logger2.info('Маленький объем, завершаю скрипт')
             return False
         return float(x)
@@ -59,7 +59,7 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
         symbol_price = await get_symbol_price(symbol)
         if not symbol_price:
             return False
-        qty = str(eval(f'{amount} / {symbol_price})'))
+        qty = str(eval(f'{amount} / {symbol_price}'))
         # Открываем короткую позицию
         order = client.place_order(
             category="linear",
