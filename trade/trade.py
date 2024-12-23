@@ -119,7 +119,7 @@ async def trade(symbol):
                 break
 
             logger2.info("Нет сигнала для входа. Ждем следующую свечу...")
-            await asyncio.sleep(300)  # Пауза 5 минут
+            await asyncio.sleep(220)  # Пауза 5 минут
         except Exception as e:
             logger2.info(f"Ошибка: {e}")
             break
