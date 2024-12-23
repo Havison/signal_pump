@@ -139,13 +139,11 @@ async def default_signal_user(user, symbol, a, sml, quantity_interval, interval,
             return
         if symbol in bybit and symbol in binance:
             if pd == 1:
-                await asyncio.gather(message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours), trade(symbol))
-            else:
+                asyncio.create_task(trade(symbol))
                 await message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours)
         elif symbol in bybit:
             if pd == 1:
-                await asyncio.gather(message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours), trade(symbol))
-            else:
+                asyncio.create_task(trade(symbol))
                 await message_bybit(user.tg_id, a, symbol, interval, q, sml, hours)
         else:
             await message_binance(user.tg_id, a, symbol, interval, q, sml, hours)
