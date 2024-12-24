@@ -62,7 +62,7 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
         if not symbol_price:
             return False
         if symbol_price > 10:
-            qty = str(round(amount / symbol_price, 2))
+            qty = str(round(amount / symbol_price, 1))
         else:
             qty = str(ceil(amount / symbol_price))
         # Открываем короткую позицию
