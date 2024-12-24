@@ -18,7 +18,9 @@ client = HTTP(testnet=False, api_key=config.by_bit.api_key, api_secret=config.by
 trade_amount = 10  # Размер сделки в USDT
 stop_loss_pct = 2  # Стоп-лосс в процентах
 take_profit_pct = 2  # Уровень активации трейлинг-стопа
-trailing_stop_pct = 1.5  # Расстояние трейлинг-стопа
+trailing_stop_pct = 2
+take_profit = 5
+# Расстояние трейлинг-стопа
 
 
 async def get_candles(symbol, interval="5", limit=2):
@@ -78,6 +80,7 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
         # Установка стоп-лосса и трейлинг-стопа
         stop_loss_price = symbol_price * (1 + stop_loss / 100)
         activation_price = symbol_price * (1 - trigger_profit / 100)
+        take_profit = symbol_price * (1 - 5 / 100)
         trailing_stop_distance = activation_price * (trailing_stop / 100)
 
         client.set_trading_stop(
@@ -85,6 +88,7 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
             symbol=symbol,
             trailing_stop=str(trailing_stop_distance),
             activePrice=str(activation_price),
+            takeProfit=str(take_profit),
             positionIdx=2
         )
         logger2.info(f"Установлен трейлинг-стоп: активация при {activation_price}, коррекция {trailing_stop_distance}.")
