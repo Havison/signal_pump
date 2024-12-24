@@ -46,7 +46,7 @@ async def get_symbol_price(symbol):
         ticker = client.get_tickers(category="linear", symbol=symbol)
         x = ticker['result']['list'][0]['lastPrice']
         v = ticker['result']['list'][0]['volume24h']
-        if float(v) * float(x) < 5000000:
+        if abs(float(v) * float(x)) < 5000000:
             logger2.info('Маленький объем, завершаю скрипт')
             return False
         return float(x)
