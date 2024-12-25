@@ -88,7 +88,7 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
             last_price = await get_symbol_price(symbol)
             result = eval(f'({last_price} - {symbol_price}) / {last_price} * {100}')
             if result <= -1.8:
-                stop = last_price * (1 - 2 / 100)
+                stop = last_price - (last_price / 100)
                 client.set_trading_stop(
                     category="linear",
                     symbol=symbol,
