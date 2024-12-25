@@ -81,7 +81,7 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
         # Установка стоп-лосса и трейлинг-стопа
         stop_loss_price = symbol_price * (1 + stop_loss / 100)
         activation_price = symbol_price * (1 - trigger_profit / 100)
-        take_profit = symbol_price * (1 - 5 / 100)
+        take_profit = symbol_price * (1 - 4 / 100)
         trailing_stop_distance = activation_price * (trailing_stop / 100)
 
         while True:
