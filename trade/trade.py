@@ -46,7 +46,7 @@ async def get_symbol_price(symbol):
         ticker = client.get_tickers(category="linear", symbol=symbol)
         x = ticker['result']['list'][0]['lastPrice']
         v = ticker['result']['list'][0]['volume24h']
-        if abs(float(v) * float(x)) < 5000000:
+        if abs(float(v) * float(x)) < 8000000:
             logger2.info('Маленький объем, завершаю скрипт')
             return False
         return float(x)
@@ -77,21 +77,27 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
         )
         logger2.info(f"Открыт шорт: {order}")
 
+
         # Установка стоп-лосса и трейлинг-стопа
         stop_loss_price = symbol_price * (1 + stop_loss / 100)
         activation_price = symbol_price * (1 - trigger_profit / 100)
         take_profit = symbol_price * (1 - 5 / 100)
         trailing_stop_distance = activation_price * (trailing_stop / 100)
 
-        client.set_trading_stop(
-            category="linear",
-            symbol=symbol,
-            trailing_stop=str(trailing_stop_distance),
-            activePrice=str(activation_price),
-            takeProfit=str(take_profit),
-            positionIdx=2
-        )
-        logger2.info(f"Установлен трейлинг-стоп: активация при {activation_price}, коррекция {trailing_stop_distance}.")
+        while True:
+            last_price = await get_symbol_price(symbol)
+            result = eval(f'({last_price} - {symbol_price}) / {last_price} * {100}')
+            if result <= -1.8:
+                stop = last_price * (1 - 2 / 100)
+                client.set_trading_stop(
+                    category="linear",
+                    symbol=symbol,
+                    stoploss=str(stop),
+                    takeProfit=str(take_profit),
+                    positionIdx=2
+                )
+                logger2.info(f"Установлен стоп и тейк: стоп на цене {stop}, тэйк {take_profit}.")
+                break
     except Exception as e:
         logger2.error(f"Ошибка при открытии шорта: {e}")
 
