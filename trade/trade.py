@@ -124,8 +124,9 @@ async def trade(symbol, last_price_trade):
             if close_price < open_price:
                 last_price_now = await get_symbol_price(symbol)
                 price = eval(f'({last_price_trade} - {last_price_now}) / {last_price_trade} * {100}')
-                if price < 5:
+                if price <= -5:
                     logger2.info('Цена сильно упала, сделку не открываю')
+                    break
                 logger2.info(f"Обнаружена красная свеча. Открываем шорт на {trade_amount} USDT.")
                 await place_short_trade(
                     symbol,
