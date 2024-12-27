@@ -121,7 +121,7 @@ async def users_list(session, http_session):
 
 
 async def default_signal_user(user, symbol, a, sml, quantity_interval, interval, pd, bybit, binance,
-                              quantity_signal_pd):
+                              quantity_signal_pd, last_price_trade=None):
     quantity_signal = 0
     hours_signal = {360: 'за 6 часов', 720: 'за 12 часов'}
     signal_state = await user.state_signal()
@@ -145,7 +145,7 @@ async def default_signal_user(user, symbol, a, sml, quantity_interval, interval,
                 await message_bybit_binance(user.tg_id, a, symbol, interval, q, sml, hours)
         elif symbol in bybit:
             if pd == 1:
-                asyncio.create_task(trade(symbol))
+                asyncio.create_task(trade(symbol, last_price_trade))
                 await message_bybit(user.tg_id, a, symbol, interval, q, sml, hours)
             else:
                 await message_bybit(user.tg_id, a, symbol, interval, q, sml, hours)
@@ -177,9 +177,10 @@ async def user_signal_bybit(idt, bybit, binance, session, http_session):
         for value in signal_price['pump']:
             symbol = value[0]
             a = value[1]
+            last_price_trade = value[2]
             await default_signal_user(user, symbol, a,
                                       '&#128994;', quantity_interval, interval_pump,
-                                      1, bybit, binance, quantity_signal_pd)
+                                      1, bybit, binance, quantity_signal_pd, last_price_trade)
     if 'dump' in signal_price:
         for value in signal_price['dump']:
             symbol = value[0]

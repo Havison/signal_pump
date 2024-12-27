@@ -102,11 +102,12 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
         logger2.error(f"Ошибка при открытии шорта: {e}")
 
 
-async def trade(symbol):
+async def trade(symbol, last_price_trade):
     logger2.info(f"Начинаем мониторинг пары {symbol}...")
     while True:
         try:
-            if not await get_symbol_price(symbol):
+            last_price_now = await get_symbol_price(symbol)
+            if not last_price_now:
                 logger2.info('Недостаточно оборота')
                 break
             candles = await get_candles(symbol)
@@ -121,6 +122,10 @@ async def trade(symbol):
 
             # Проверяем "красную свечу"
             if close_price < open_price:
+                last_price_now = await get_symbol_price(symbol)
+                price = eval(f'({last_price_trade} - {last_price_now}) / {last_price_trade} * {100}')
+                if price < 5:
+                    logger2.info('Цена сильно упала, сделку не открываю')
                 logger2.info(f"Обнаружена красная свеча. Открываем шорт на {trade_amount} USDT.")
                 await place_short_trade(
                     symbol,

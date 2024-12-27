@@ -58,7 +58,7 @@ class MongoDatabase:
                     if t_pump:
                         if setting['pump'][0] > 0:
                             if setting['pump'][0] <= result:
-                                finish_result.setdefault('pump', []).append((item['currency'], result))
+                                finish_result.setdefault('pump', []).append((item['currency'], result, a))
 
                         else:
                             if setting['pump'][0] >= result:
