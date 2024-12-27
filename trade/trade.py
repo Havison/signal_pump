@@ -17,9 +17,8 @@ client = HTTP(testnet=False, api_key=config.by_bit.api_key, api_secret=config.by
 
 trade_amount = 25 # Размер сделки в USDT
 stop_loss_pct = 2  # Стоп-лосс в процентах
-take_profit_pct = 2.5  # Уровень активации трейлинг-стопа
+take_profit_pct = 4  # Уровень активации трейлинг-стопа
 trailing_stop_pct = 1.5
-take_profit = 5
 # Расстояние трейлинг-стопа
 
 
@@ -92,7 +91,8 @@ async def place_short_trade(symbol, amount, stop_loss, trailing_stop, trigger_pr
                 client.set_trading_stop(
                     category="linear",
                     symbol=symbol,
-                    takeProfit=str(take_profit),
+                    trailing_stop=str(trailing_stop_distance),
+                    activePrice=str(activation_price),
                     stoploss=str(stop),
                     positionIdx=2
                 )
