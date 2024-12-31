@@ -151,15 +151,15 @@ class MySQLDatabase:
                 db.execute('''SELECT 1 FROM quantity WHERE
                 tg_id=%s and symbol=%s and pd=%s''', (self.tg_id, symbol, short))
                 symbol_signal = db.fetchone()
-                dt = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=interval_signal)
-                dt_base = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=interval_user + 1)
+                dt = datetime.datetime.now() - datetime.timedelta(minutes=interval_signal)
+                dt_base = datetime.datetime.now() - datetime.timedelta(minutes=interval_user + 1)
                 db.execute('''SELECT COUNT(*) FROM quantity WHERE (
                 tg_id=%s and symbol=%s and pd=%s and date>%s) ORDER BY date''', (self.tg_id, symbol, short, dt))
                 quantity_count = db.fetchone()
                 db.execute('''SELECT COUNT(*) FROM quantity WHERE (
                 tg_id=%s and symbol=%s and pd=%s and date>%s) ORDER BY date''', (self.tg_id, symbol, short, dt_base))
                 quantity_count_base = db.fetchone()
-                dt = datetime.datetime.now(datetime.timezone.utc)
+                dt = datetime.datetime.now()
                 if symbol_signal is None:
                     db.execute('''INSERT INTO quantity (tg_id, symbol, pd, date) VALUES (
                     %s, %s, %s, %s)''', (self.tg_id, symbol, short, dt))
@@ -181,12 +181,12 @@ class MySQLDatabase:
             with self.connect_db.cursor() as db:
                 if interval_signal not in [360, 720]:
                     interval_signal = 1440
-                dt_cl = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=interval_signal)
+                dt_cl = datetime.datetime.now() - datetime.timedelta(minutes=interval_signal)
                 db.execute('''SELECT COUNT(*) FROM quantity WHERE
                         (tg_id=%s and symbol=%s and pd=%s and date>%s) ORDER BY date''',
                                                   (self.tg_id, symbol, short, dt_cl))
                 quantity_count = db.fetchone()
-                dt = datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(minutes=1440)
+                dt = datetime.datetime.now() - datetime.timedelta(minutes=1440)
                 db.execute('''DELETE FROM quantity WHERE (
                 tg_id=%s and pd=%s and date<%s)''',
                                  (self.tg_id, short, dt))
