@@ -152,7 +152,7 @@ class MySQLDatabase:
                 tg_id=%s and symbol=%s and pd=%s''', (self.tg_id, symbol, short))
                 symbol_signal = db.fetchone()
                 dt = datetime.datetime.now() - datetime.timedelta(minutes=interval_signal)
-                dt_base = datetime.datetime.now() - datetime.timedelta(minutes=interval_user + 1)
+                dt_base = datetime.datetime.now() - datetime.timedelta(minutes=interval_user + 3)
                 db.execute('''SELECT COUNT(*) FROM quantity WHERE (
                 tg_id=%s and symbol=%s and pd=%s and date>%s) ORDER BY date''', (self.tg_id, symbol, short, dt))
                 quantity_count = db.fetchone()
@@ -166,7 +166,7 @@ class MySQLDatabase:
                     self.connect_db.commit()
                     return True
                 elif quantity_count[0] < quantity_signal:
-                    if quantity_count_base[0] < 1:
+                    if quantity_count_base[0] == 0:
                         db.execute('''INSERT INTO quantity (tg_id, symbol, pd, date)
                         VALUES (%s, %s, %s, %s)''', (self.tg_id, symbol, short, dt))
                         self.connect_db.commit()
