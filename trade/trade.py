@@ -45,7 +45,7 @@ async def get_symbol_price(symbol):
         ticker = client.get_tickers(category="linear", symbol=symbol)
         x = ticker['result']['list'][0]['lastPrice']
         v = ticker['result']['list'][0]['volume24h']
-        if abs(float(v) * float(x)) < 4000000:
+        if abs(float(v) * float(x)) < 5000000:
             logger2.info('Маленький объем, завершаю скрипт')
             return False
         return float(x)
@@ -124,7 +124,7 @@ async def trade(symbol, last_price_trade):
             if close_price < open_price:
                 last_price_now = await get_symbol_price(symbol)
                 price = eval(f'({last_price_trade} - {last_price_now}) / {last_price_trade} * {100}')
-                if price <= -5:
+                if price <= -4:
                     logger2.info('Цена сильно упала, сделку не открываю')
                     break
                 logger2.info(f"Обнаружена красная свеча. Открываем шорт на {trade_amount} USDT.")
